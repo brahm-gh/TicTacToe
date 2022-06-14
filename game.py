@@ -1,5 +1,7 @@
 import pygame
 import numpy as np
+import random
+import logging
 
 pygame.init()
 
@@ -21,6 +23,7 @@ LINE_COLOR = (42, 176, 228)
 CIRCLE_COLOR = (239, 231, 240)
 CROSS_COLOR = (147, 54, 119)
 WINNER_FONT = pygame.font.SysFont('comicsans', WIDTH // 6)
+player = 1
 
 #Screen
 WIN = pygame.display.set_mode( (WIDTH, HEIGHT) )
@@ -40,6 +43,18 @@ class Model():
 					return False
 
 		return True
+#mark all available squares
+	def all_available_squares(self,row , col):
+		l = []
+		for row in range(BOARD_ROWS):
+			for col in range(BOARD_COLS):
+				if self.board[row][col] == 0:
+					l.append((row, col))
+		return l
+
+
+	def mark_square(self, row, col, player):
+		Model.board[row][col] = player
 
 
 #View to handle data shown to the user
@@ -72,8 +87,7 @@ class View(Model):
 									 (col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE),
 									 CROSS_WIDTH)
 
-	def mark_square(self, row, col, player):
-		Model.board[row][col] = player
+
 
 	def draw_vertical_winning_line(self, col, player):
 		posX = col * SQUARE_SIZE + SQUARE_SIZE // 2
@@ -119,10 +133,35 @@ class View(Model):
 
 
 #Controller to update data in Model and View
-class Controller():
+class Controller:
 	def __init__(self):
 		self.model = Model()
 		self.view = View()
+	class Ai:
+		def chose_random(self):
+			li = self.model.all_available_squares()
+			index = random.randrange(0, len(li))
+			row = li[index][0]
+			col = li[index][1]
+			self.model.mark_square(row, col, player)
+			#return li[index]
+
+		"""more work needs to go here!"""
+		def unbeatable_ai(self):
+			award = 0
+			li = self.model.all_available_squares()
+			for i in range(len(li)):
+				self.chose_random()
+				#self.model.mark_square(li[i][0], li[i][1], player)
+				if self.check_win(player) and player == 1:
+					award = 1
+
+
+
+
+
+
+
 	def check_win(self,player):
 		# vertical win check
 		for col in range(BOARD_COLS):
@@ -132,7 +171,7 @@ class Controller():
 
 		# horizontal win check
 		for row in range(BOARD_ROWS):
-			if self.model.board[row][0] == player and self.model.board[row][1] == player and self.board[row][2] == player:
+			if self.model.board[row][0] == player and self.model.board[row][1] == player and self.model.board[row][2] == player:
 				self.view.draw_horizontal_winning_line(row, player)
 				return True
 
@@ -160,7 +199,6 @@ class Controller():
 
 # MAINLOOP
 def main():
-	player = 1
 	game_over = False
 	run = True
 	text = 'Game Over'
@@ -180,20 +218,39 @@ def main():
 				clicked_col = int(mouseX // SQUARE_SIZE)
 
 				if cr.model.available_square( clicked_row, clicked_col ):
+					if event.type == pygame.KEYDOWN:
+						if event.type == pygame.K_a:
+							ai = cr.Ai()
+							ai.unbeatable_ai()
 
-					cr.view.mark_square( clicked_row, clicked_col, player )
+
+					else:
+						cr.model.mark_square( clicked_row, clicked_col, player )
+					"""implement the other AI mode above!"""
+
 					if cr.check_win( player ):
 						game_over = True
 						cr.view.draw_winner(text)
 					player = player % 2 + 1
 
+					logging.basicConfig(level=logging.INFO)
+					"""logging to make sure everything works as intented"""
+					if ...:
+						logging.info("")
+
+
+
 					cr.view.draw_figures()
 
+			#move this to controller
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_r:
 					cr.restart()
 					player = 1
 					game_over = False
+
+
+			"""implement logging here!"""
 
 		pygame.display.update()
 	pygame.quit()
