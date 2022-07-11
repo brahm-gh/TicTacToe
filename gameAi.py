@@ -3,6 +3,8 @@ import sys
 import pygame
 import random
 import numpy as np
+import logging
+import datetime
 
 #Constants
 WIDTH = 600
@@ -110,11 +112,13 @@ class AI:
         self.player = player
 
 
+
     def random(self, board):
         empty_sqrs = board.get_empty_sqrs()
         idx = random.randrange(0, len(empty_sqrs))
 
         return empty_sqrs[idx]  # (row, col)
+
 
 
     def minimax(self, board, maximizing):
@@ -179,6 +183,8 @@ class AI:
         return move  # row, col
 
 
+
+
 class View:
 
     def __init__(self):
@@ -228,8 +234,17 @@ class View:
     def next_turn(self):
         self.player = self.player % 2 + 1
 
+    def return_gamemode(self):
+        return self.gamemode
+
     def change_gamemode(self):
         self.gamemode = 'ai' if self.gamemode == 'pvp' else 'pvp'
+        logging.basicConfig(level = logging.INFO)
+        if self.gamemode == 'ai':
+            logging.info('You are in AI mode')
+        else:
+            logging.info('You are in pear vs pear mode')
+
 
     def isover(self):
         return self.board.final_state(show=True) != 0 or self.board.is_full()
@@ -242,12 +257,51 @@ class View:
         screen.blit(draw_text, (WIDTH // 2 - draw_text.get_width() / 2, HEIGHT // 3 - draw_text.get_height() / 2))
         pygame.display.update()
 
+
+
+
 class Controller:
     def main(self):
 
         game = View()
         board = game.board
         ai = game.ai
+
+        # profiling
+    def random_boards(self, n):
+        self.view = View()
+        empty_sqrs = self.board.get_empty_sqrs()
+
+        for i in range(n):
+            idx = random.randrange(0, len(empty_sqrs))
+            self.board.mark_square(empty_sqrs[idx][0], empty_sqrs[idx][1], self.player)
+        return self.board
+
+    total = 0
+    total1 = 0
+    n = 9
+    for j in range(9):
+        for i in range(100):
+            board = random_boards(n)
+            start = datetime.now()
+            main().ai.level = 0
+            row, col = eval(board)
+            main().game.make_move(row, col)
+            end = datetime.now() - start
+            total += end
+            start1 = datetime.now()
+
+            main().ai.level = 1
+            row, col = eval(board)
+            main().game.make_move(row, col)
+            end1 = datetime.now() - start1
+            total1 += end1
+
+            n -= 1
+
+        print('Random AI took: ', total // 100, f'for {n} remaining squares')
+        print('Unbeatable AI took: ', total1 // 100, f'for {n} remaining squares')
+
 
 
         while True:
